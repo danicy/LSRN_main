@@ -232,15 +232,15 @@ class DSRB(nn.Module):
         self.conv1 = BSConvU(in_channels, out_channels, kernel_size=3, **kwargs)
         self.conv2 = BSConvU(out_channels, out_channels, kernel_size=3, **kwargs)
         self.act = nn.GELU()
-        self.esa = LSA(out_channels, conv)
+        self.lsa = LSA(out_channels, conv)
 
     def forward(self, x):
         r_c0 = self.act(self.conv1(x) + x)
         r_c1 = self.act(self.conv2(r_c0) + r_c0)
-        r_c = self.esa(r_c1 + r_c0 + x)
+        r_c = self.lsa(r_c1 + r_c0 + x)
         return r_c + x
 
-#ESDB 模块
+#ARDB 非对残差蒸馏块
 class ARDB(nn.Module):
     def __init__(self, in_channels, out_channels, conv=nn.Conv2d, p=0.25):
         super(ARDB, self).__init__()
@@ -305,7 +305,7 @@ class LSRN(nn.Module):
         # 添加一个转换层，将原始输入的通道数从 num_in_ch 转换为 num_feat
         self.conv_to_upsample = nn.Conv2d(num_in_ch, num_feat, kernel_size=1, bias=False)
 
-        # 保持8个ESDB块
+        # 8个ARDB块
         self.B1 = ARDB(in_channels=num_feat, out_channels=num_feat, conv=self.conv, p=p)
         self.B2 = ARDB(in_channels=num_feat, out_channels=num_feat, conv=self.conv, p=p)
         self.B3 = ARDB(in_channels=num_feat, out_channels=num_feat, conv=self.conv, p=p)
